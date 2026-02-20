@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { Sidebar } from "@/components/wiki/sidebar";
 import { WikiContent } from "@/components/wiki/wiki-content";
+import { TableOfContents } from "@/components/wiki/table-of-contents";
 import { WikiLoadingSkeleton } from "@/components/wiki/loading-skeleton";
 import { ThinkingIndicator } from "@/components/wiki/thinking-indicator";
 import { useWiki } from "@/hooks/use-wiki";
@@ -74,19 +75,27 @@ export default function WikiPage() {
           </div>
         )}
 
-        {activeSubsystem ? (
-          <WikiContent repoUrl={repoUrl} subsystem={activeSubsystem} />
-        ) : (
-          <div className="space-y-4">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-4 w-96" />
-            <div className="mt-6 space-y-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-4 w-full" />
-              ))}
-            </div>
+        <div className="flex gap-10">
+          <div className="min-w-0 flex-1">
+            {activeSubsystem ? (
+              <WikiContent repoUrl={repoUrl} subsystem={activeSubsystem} />
+            ) : (
+              <div className="space-y-4">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-4 w-96" />
+                <div className="mt-6 space-y-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={i} className="h-4 w-full" />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        )}
+
+          {activeSubsystem && (
+            <TableOfContents html={activeSubsystem.content} />
+          )}
+        </div>
       </main>
     </>
   );
