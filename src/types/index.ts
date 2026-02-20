@@ -19,3 +19,16 @@ export interface WikiStructure {
   description: string;
   subsystems: Subsystem[];
 }
+
+// Stream event types
+export type StreamEvent =
+  | { type: "status"; message: string }
+  | {
+      type: "analysis";
+      repoName: string;
+      description: string;
+      subsystems: { id: string; name: string; description: string }[];
+    }
+  | { type: "page"; subsystem: Subsystem }
+  | { type: "done" }
+  | { type: "error"; message: string };

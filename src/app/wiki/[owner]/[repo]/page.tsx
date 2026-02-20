@@ -1,10 +1,13 @@
 "use client";
 
+import { useMemo } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { Sidebar } from "@/components/wiki/sidebar";
 import { WikiContent } from "@/components/wiki/wiki-content";
 import { WikiLoadingSkeleton } from "@/components/wiki/loading-skeleton";
+import { ThinkingIndicator } from "@/components/wiki/thinking-indicator";
 import { useWiki } from "@/hooks/use-wiki";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function WikiPage() {
   const params = useParams<{ owner: string; repo: string }>();
@@ -14,9 +17,20 @@ export default function WikiPage() {
   const repo = params.repo;
   const sectionId = searchParams.get("section");
 
-  const { wiki, isLoading, error } = useWiki(owner, repo);
+  const { repoName, subsystemList, pages, status, isDone, error } =
+    useWiki(owner, repo);
 
-  if (isLoading) return <WikiLoadingSkeleton />;
+  const readyIds = useMemo(() => new Set(pages.keys()), [pages]);
+
+  // Initial loading — no analysis yet
+  if (!repoName && !error) {
+    return (
+      <div className="flex h-screen w-full flex-col items-center justify-center gap-4">
+        {status && <ThinkingIndicator message={status} />}
+        {!status && <WikiLoadingSkeleton />}
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -35,10 +49,13 @@ export default function WikiPage() {
     );
   }
 
-  if (!wiki) return null;
+  // Find active subsystem — prefer requested section, fall back to first ready page
+  const activeId =
+    sectionId && readyIds.has(sectionId)
+      ? sectionId
+      : [...readyIds][0] ?? null;
 
-  const activeSubsystem =
-    wiki.subsystems.find((s) => s.id === sectionId) ?? wiki.subsystems[0];
+  const activeSubsystem = activeId ? pages.get(activeId) : null;
   const repoUrl = `https://github.com/${owner}/${repo}`;
 
   return (
@@ -46,11 +63,30 @@ export default function WikiPage() {
       <Sidebar
         owner={owner}
         repo={repo}
-        subsystems={wiki.subsystems}
-        activeId={activeSubsystem.id}
+        subsystems={subsystemList}
+        readyIds={readyIds}
+        activeId={activeId ?? undefined}
       />
       <main className="flex-1 overflow-y-auto p-10">
-        <WikiContent repoUrl={repoUrl} subsystem={activeSubsystem} />
+        {status && !isDone && (
+          <div className="mb-6">
+            <ThinkingIndicator message={status} />
+          </div>
+        )}
+
+        {activeSubsystem ? (
+          <WikiContent repoUrl={repoUrl} subsystem={activeSubsystem} />
+        ) : (
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-96" />
+            <div className="mt-6 space-y-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-4 w-full" />
+              ))}
+            </div>
+          </div>
+        )}
       </main>
     </>
   );

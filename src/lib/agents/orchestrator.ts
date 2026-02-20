@@ -1,21 +1,39 @@
 import { analyzeRepo } from "./repo-analyzer";
 import { buildSubsystemPage } from "./page-builder";
-import type { WikiStructure } from "@/types";
+import type { StreamEvent } from "@/types";
 
-export async function generateWiki(
+export async function generateWikiStream(
   owner: string,
-  repo: string
-): Promise<WikiStructure> {
+  repo: string,
+  emit: (event: StreamEvent) => void
+): Promise<void> {
+  emit({ type: "status", message: "Fetching repository structure..." });
+
   const analysis = await analyzeRepo(owner, repo);
 
-  const subsystems = await Promise.all(
-    analysis.subsystems.map((sub) => buildSubsystemPage(owner, repo, sub))
-  );
-
-  return {
+  emit({
+    type: "analysis",
     repoName: analysis.repoName,
-    repoUrl: `https://github.com/${owner}/${repo}`,
     description: analysis.description,
-    subsystems,
-  };
+    subsystems: analysis.subsystems.map((s) => ({
+      id: s.id,
+      name: s.name,
+      description: s.description,
+    })),
+  });
+
+  emit({
+    type: "status",
+    message: `Found ${analysis.subsystems.length} subsystems. Generating pages...`,
+  });
+
+  const promises = analysis.subsystems.map(async (sub) => {
+    emit({ type: "status", message: `Writing: ${sub.name}...` });
+    const page = await buildSubsystemPage(owner, repo, sub);
+    emit({ type: "page", subsystem: page });
+    return page;
+  });
+
+  await Promise.all(promises);
+  emit({ type: "done" });
 }
