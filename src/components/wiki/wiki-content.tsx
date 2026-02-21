@@ -1,4 +1,5 @@
 import type { Subsystem } from "@/types";
+import { WikiProse } from "@/components/wiki/wiki-prose";
 
 interface WikiContentProps {
   repoUrl: string;
@@ -35,10 +36,7 @@ export function WikiContent({ repoUrl, subsystem }: WikiContentProps) {
         </section>
       )}
 
-      <div
-        className="wiki-prose"
-        dangerouslySetInnerHTML={{ __html: subsystem.content }}
-      />
+      <WikiProse html={subsystem.content} />
 
       {subsystem.citations.length > 0 && (
         <section className="mt-10 border-t pt-6">
