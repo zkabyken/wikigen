@@ -102,7 +102,7 @@ export function TableOfContents({ html }: TableOfContentsProps) {
 
   return (
     <nav className="hidden w-48 shrink-0 xl:block">
-      <div className="sticky top-10">
+      <div className="sticky top-10 max-h-[calc(100vh-6rem)] overflow-y-auto">
         <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           On this page
         </p>

@@ -68,7 +68,7 @@ export default function WikiPage() {
         readyIds={readyIds}
         activeId={activeId ?? undefined}
       />
-      <main className="flex-1 overflow-y-auto p-10">
+      <main className="flex-1 overflow-y-auto p-10 pb-[50vh]">
         {status && !isDone && (
           <div className="mb-6">
             <ThinkingIndicator message={status} />
