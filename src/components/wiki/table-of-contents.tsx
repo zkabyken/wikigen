@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 
 interface TocItem {
   id: string;
@@ -14,6 +14,7 @@ interface TableOfContentsProps {
 
 export function TableOfContents({ html }: TableOfContentsProps) {
   const [activeId, setActiveId] = useState<string>("");
+  const hasInitialized = useRef(false);
 
   const headings = useMemo(() => {
     const items: TocItem[] = [];
@@ -33,36 +34,71 @@ export function TableOfContents({ html }: TableOfContentsProps) {
   useEffect(() => {
     if (headings.length === 0) return;
 
-    // Inject ids into the rendered headings so anchor links work
-    const container = document.querySelector(".wiki-prose");
-    if (!container) return;
+    // Small delay to ensure DOM is rendered
+    const timeout = setTimeout(() => {
+      const proseContainer = document.querySelector(".wiki-prose");
+      if (!proseContainer) return;
 
-    const elements = container.querySelectorAll("h2, h3");
-    elements.forEach((el) => {
-      const text = (el.textContent ?? "")
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "");
-      el.id = text;
-    });
+      // Find the scrollable ancestor (the <main> with overflow-y-auto)
+      const scrollRoot = proseContainer.closest("main");
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActiveId(entry.target.id);
-            break;
+      // Inject ids into rendered headings
+      const elements = proseContainer.querySelectorAll("h2, h3");
+      elements.forEach((el) => {
+        const text = (el.textContent ?? "")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "");
+        el.id = text;
+      });
+
+      // Set first heading as active on initial load
+      if (!hasInitialized.current && headings.length > 0) {
+        setActiveId(headings[0].id);
+        hasInitialized.current = true;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              setActiveId(entry.target.id);
+              break;
+            }
           }
+        },
+        {
+          root: scrollRoot,
+          rootMargin: "-80px 0px -70% 0px",
+          threshold: 0,
         }
-      },
-      { rootMargin: "-80px 0px -70% 0px", threshold: 0 }
-    );
+      );
 
-    elements.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
+      elements.forEach((el) => observer.observe(el));
+      return () => observer.disconnect();
+    }, 100);
+
+    return () => clearTimeout(timeout);
   }, [headings]);
 
+  // Reset initialization when content changes
+  useEffect(() => {
+    hasInitialized.current = false;
+  }, [html]);
+
   if (headings.length === 0) return null;
+
+  function scrollToHeading(id: string) {
+    const el = document.getElementById(id);
+    const scrollRoot = el?.closest("main");
+    if (!el || !scrollRoot) return;
+
+    const elTop = el.getBoundingClientRect().top;
+    const rootTop = scrollRoot.getBoundingClientRect().top;
+    const offset = elTop - rootTop + scrollRoot.scrollTop - 40;
+
+    scrollRoot.scrollTo({ top: offset, behavior: "smooth" });
+  }
 
   return (
     <nav className="hidden w-48 shrink-0 xl:block">
@@ -77,10 +113,7 @@ export function TableOfContents({ html }: TableOfContentsProps) {
                 href={`#${h.id}`}
                 onClick={(e) => {
                   e.preventDefault();
-                  document.getElementById(h.id)?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                  });
+                  scrollToHeading(h.id);
                 }}
                 className={`block border-l-2 py-1 text-xs transition-colors ${
                   h.level === 3 ? "pl-6" : "pl-3"
