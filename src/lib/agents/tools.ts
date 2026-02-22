@@ -92,7 +92,7 @@ GUIDELINES:
 - Include short code snippets where helpful (wrap in <pre><code>).
 - Aim for 300-600 words of content.
 - For citations, include the file path and specific line ranges where the relevant code lives.
-- For entry points, list the key functions, API routes, CLI commands, or exports a user would interact with.
+- For entry points, keep them short: name + optional brief description. E.g. "DomService.get_dom_tree — builds the DOM tree", "GET /api/users — list all users". No arguments or file paths.
 - Write for developers — be precise and technical but readable.`,
     prompt: `Generate a wiki page for the "${subsystem.name}" subsystem of ${owner}/${repo}.
 

@@ -41,7 +41,7 @@ export const SubsystemPageSchema = z.object({
   citations: z.array(CitationSchema),
   entryPoints: z
     .array(z.string())
-    .describe("Key entry points like API routes, CLI commands, exported functions"),
+    .describe("Short entry points: name + optional brief description. E.g. 'DomService.get_dom_tree — builds the DOM tree'. No arguments or file paths."),
 });
 
 export type SubsystemPage = z.infer<typeof SubsystemPageSchema>;
