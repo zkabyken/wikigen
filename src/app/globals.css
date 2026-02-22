@@ -152,6 +152,19 @@
   overflow-x: auto;
 }
 
+/* Sandpack — strip wrapper chrome */
+.sandpack-clean .sp-wrapper {
+  background: transparent !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+.sandpack-clean .sp-layout {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+}
+
 /* Wiki prose styles */
 .wiki-prose {
   line-height: 1.75;

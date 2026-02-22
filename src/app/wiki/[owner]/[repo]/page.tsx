@@ -5,14 +5,19 @@ import { useParams, useSearchParams } from "next/navigation";
 import { Sidebar } from "@/components/wiki/sidebar";
 import { WikiContent } from "@/components/wiki/wiki-content";
 import { TableOfContents } from "@/components/wiki/table-of-contents";
-import { WikiLoadingSkeleton } from "@/components/wiki/loading-skeleton";
 import { ThinkingIndicator } from "@/components/wiki/thinking-indicator";
 import { ChatPanel } from "@/components/wiki/chat-panel";
+import {
+  ChainOfThought,
+  ChainOfThoughtHeader,
+  ChainOfThoughtContent,
+  ChainOfThoughtStep,
+} from "@/components/ai-elements/chain-of-thought";
 import { useWiki } from "@/hooks/use-wiki";
 import { useChat } from "@/hooks/use-chat";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles } from "lucide-react";
+import { Sparkles, BookOpen } from "lucide-react";
 
 export default function WikiPage() {
   const params = useParams<{ owner: string; repo: string }>();
@@ -22,7 +27,7 @@ export default function WikiPage() {
   const repo = params.repo;
   const sectionId = searchParams.get("section");
 
-  const { repoName, subsystemList, pages, status, isDone, error } =
+  const { repoName, subsystemList, pages, status, statusHistory, isDone, error } =
     useWiki(owner, repo);
 
   const readyIds = useMemo(() => new Set(pages.keys()), [pages]);
@@ -83,9 +88,32 @@ export default function WikiPage() {
   // Initial loading — no analysis yet
   if (!repoName && !error) {
     return (
-      <div className="flex h-screen w-full flex-col items-center justify-center gap-4">
-        {status && <ThinkingIndicator message={status} />}
-        {!status && <WikiLoadingSkeleton />}
+      <div className="flex h-screen w-full flex-col items-center justify-center">
+        <div className="w-full max-w-md space-y-6">
+          <div className="flex items-center gap-3">
+            <BookOpen className="size-5 text-primary" />
+            <h2 className="text-lg font-semibold">
+              Generating wiki for {owner}/{repo}
+            </h2>
+          </div>
+
+          <ChainOfThought defaultOpen>
+            <ChainOfThoughtHeader>
+              Progress ({statusHistory.length} {statusHistory.length === 1 ? "step" : "steps"})
+            </ChainOfThoughtHeader>
+            <ChainOfThoughtContent>
+              {statusHistory.map((step, i) => (
+                <ChainOfThoughtStep
+                  key={i}
+                  label={step}
+                  status={
+                    i === statusHistory.length - 1 ? "active" : "complete"
+                  }
+                />
+              ))}
+            </ChainOfThoughtContent>
+          </ChainOfThought>
+        </div>
       </div>
     );
   }

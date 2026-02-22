@@ -15,6 +15,7 @@ interface UseWikiResult {
   subsystemList: SubsystemSummary[];
   pages: Map<string, Subsystem>;
   status: string | null;
+  statusHistory: string[];
   isDone: boolean;
   error: string | null;
 }
@@ -25,6 +26,7 @@ export function useWiki(owner: string, repo: string): UseWikiResult {
   const [subsystemList, setSubsystemList] = useState<SubsystemSummary[]>([]);
   const [pages, setPages] = useState<Map<string, Subsystem>>(new Map());
   const [status, setStatus] = useState<string | null>("Connecting...");
+  const [statusHistory, setStatusHistory] = useState<string[]>(["Connecting..."]);
   const [isDone, setIsDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,6 +34,7 @@ export function useWiki(owner: string, repo: string): UseWikiResult {
     switch (event.type) {
       case "status":
         setStatus(event.message);
+        setStatusHistory((prev) => [...prev, event.message]);
         break;
       case "analysis":
         setRepoName(event.repoName);
@@ -110,5 +113,5 @@ export function useWiki(owner: string, repo: string): UseWikiResult {
     };
   }, [owner, repo, handleEvent]);
 
-  return { repoName, description, subsystemList, pages, status, isDone, error };
+  return { repoName, description, subsystemList, pages, status, statusHistory, isDone, error };
 }
