@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# wikigen
 
-## Getting Started
+One-click wiki generator for public GitHub repos. Paste a repo URL, get structured developer docs with citations back to source code.
 
-First, run the development server:
+**Live demo:** [wikigen.vercel.app](https://wikigen.vercel.app)
+
+## How it works
+
+1. **Analyze** — Fetches the repo tree + key files, then uses GPT to identify user-facing subsystems (features, not technical layers).
+2. **Generate** — Builds a wiki page per subsystem in parallel. Each page includes entry points, inline citations linking to specific files/lines, and code snippets.
+3. **Stream** — Pages arrive over SSE as they finish, so you can start reading before generation is done.
+
+There's also a Q&A chat that lets you ask questions about the generated wiki.
+
+## Stack
+
+- Next.js 16 (App Router)
+- Vercel AI SDK (`generateObject`, `streamText`, `tool()` definitions)
+- OpenAI (`gpt-5-mini`)
+- Tailwind + Radix UI
+- Sandpack for live code blocks
+
+## Running locally
+
+```bash
+git clone https://github.com/<you>/wikigen.git
+cd wikigen
+npm install
+```
+
+Create `.env.local`:
+
+```
+OPENAI_API_KEY=sk-...
+```
+
+Then:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [localhost:3000](http://localhost:3000), paste a GitHub repo URL, and go.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+  app/
+    api/wiki/generate/   SSE endpoint (wiki gen + Q&A)
+    wiki/[owner]/[repo]/  wiki viewer page
+  lib/
+    agents/
+      tools.ts           tool definitions (analyzeRepo, buildPage)
+      orchestrator.ts    chains the tools, emits SSE events
+      qa-agent.ts        streaming Q&A over wiki content
+    schemas.ts           Zod schemas for all AI outputs
+    github.ts            GitHub API helpers (tree, file content)
+  components/wiki/       sidebar, TOC, content renderer, chat panel
+  hooks/                 useWiki (SSE consumer), useChat (Q&A consumer)
+```
 
-## Learn More
+## What I'd improve with more time
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Caching generated wikis (right now it regenerates every time)
+- Better handling of very large repos (token limits, rate limiting)
+- Support for private repos via GitHub OAuth
+- Diff-aware regeneration (only rebuild pages for changed subsystems)
+- PDF/markdown export
