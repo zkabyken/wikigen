@@ -13,7 +13,6 @@ interface TableOfContentsProps {
 }
 
 export function TableOfContents({ html }: TableOfContentsProps) {
-  const [activeId, setActiveId] = useState<string>("");
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   const headings = useMemo(() => {
@@ -31,11 +30,10 @@ export function TableOfContents({ html }: TableOfContentsProps) {
     return items;
   }, [html]);
 
+  const [activeId, setActiveId] = useState<string>(() => headings[0]?.id ?? "");
+
   useEffect(() => {
     if (headings.length === 0) return;
-
-    // Set initial active heading
-    setActiveId(headings[0].id);
 
     // IDs are already in the DOM (injected by WikiProse), just observe them
     const scrollRoot = document.querySelector("main");
