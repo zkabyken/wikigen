@@ -1,5 +1,4 @@
-import { analyzeRepo } from "./repo-analyzer";
-import { buildSubsystemPage } from "./page-builder";
+import { analyzeRepo, buildPage } from "./tools";
 import type { StreamEvent } from "@/types";
 
 export async function generateWikiStream(
@@ -29,7 +28,7 @@ export async function generateWikiStream(
 
   const promises = analysis.subsystems.map(async (sub) => {
     emit({ type: "status", message: `Writing: ${sub.name}...` });
-    const page = await buildSubsystemPage(owner, repo, sub);
+    const page = await buildPage(owner, repo, sub);
     emit({ type: "page", subsystem: page });
     return page;
   });

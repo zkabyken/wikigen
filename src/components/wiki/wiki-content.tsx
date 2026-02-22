@@ -18,24 +18,6 @@ export function WikiContent({ repoUrl, subsystem }: WikiContentProps) {
         </p>
       </header>
 
-      {subsystem.entryPoints.length > 0 && (
-        <section className="mb-8">
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Entry Points
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {subsystem.entryPoints.map((ep) => (
-              <span
-                key={ep}
-                className="inline-block rounded-md border bg-muted/50 px-2.5 py-1 font-mono text-xs"
-              >
-                {ep}
-              </span>
-            ))}
-          </div>
-        </section>
-      )}
-
       <WikiProse html={subsystem.content} />
 
       {subsystem.citations.length > 0 && (
