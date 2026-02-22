@@ -2,7 +2,7 @@
 
 One-click wiki generator for public GitHub repos. Paste a repo URL, get structured developer docs with citations back to source code.
 
-**Live demo:** [wikigen.app](https://wikigen-27l0dqqrd-zhalyns-projects.vercel.app/)
+**Live demo:** [wikigen.app](https://wikigen-rho.vercel.app/)
 
 ## How it works
 
