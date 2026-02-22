@@ -59,11 +59,3 @@ src/
   components/wiki/       sidebar, TOC, content renderer, chat panel
   hooks/                 useWiki (SSE consumer), useChat (Q&A consumer)
 ```
-
-## What I'd improve with more time
-
-- Caching generated wikis (right now it regenerates every time)
-- Better handling of very large repos (token limits, rate limiting)
-- Support for private repos via GitHub OAuth
-- Diff-aware regeneration (only rebuild pages for changed subsystems)
-- PDF/markdown export
