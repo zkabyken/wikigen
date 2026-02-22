@@ -65,6 +65,7 @@ export default function WikiPage() {
         owner={owner}
         repo={repo}
         subsystems={subsystemList}
+        pages={pages}
         readyIds={readyIds}
         activeId={activeId ?? undefined}
       />
