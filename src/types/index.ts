@@ -20,7 +20,7 @@ export interface WikiStructure {
   subsystems: Subsystem[];
 }
 
-// Stream event types
+// Stream event types — wiki generation
 export type StreamEvent =
   | { type: "status"; message: string }
   | {
@@ -32,3 +32,19 @@ export type StreamEvent =
   | { type: "page"; subsystem: Subsystem }
   | { type: "done" }
   | { type: "error"; message: string };
+
+// Stream event types — Q&A chat
+export type QAStreamEvent =
+  | { type: "qa-thinking"; content: string }
+  | { type: "qa-delta"; content: string }
+  | { type: "done" }
+  | { type: "error"; message: string };
+
+// Chat message for frontend state
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  thinkingSteps?: string[];
+  isStreaming?: boolean;
+}

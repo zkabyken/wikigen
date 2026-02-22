@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "streamdown/styles.css";
+
+@source "../node_modules/streamdown/dist/*.js";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -123,6 +126,30 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Streamdown overrides for chat panel */
+.chat-streamdown [data-streamdown="code-block"] {
+  max-width: 100%;
+  border: none;
+  background: none;
+  padding: 0;
+  gap: 0;
+  margin: 0.5rem 0;
+}
+
+.chat-streamdown [data-streamdown="code-block-header"],
+.chat-streamdown [data-streamdown="code-block-actions"] {
+  display: none;
+}
+
+.chat-streamdown [data-streamdown="code-block-body"] {
+  overflow-x: auto;
+  border-radius: 0.5rem;
+}
+
+.chat-streamdown [data-streamdown="code-block-body"] pre {
+  overflow-x: auto;
 }
 
 /* Wiki prose styles */

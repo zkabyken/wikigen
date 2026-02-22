@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -30,6 +30,25 @@ export function Sidebar({
   activeId,
 }: SidebarProps) {
   const [query, setQuery] = useState("");
+  const [width, setWidth] = useState(256);
+  const dragging = useRef(false);
+
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    dragging.current = true;
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!dragging.current) return;
+      const newWidth = Math.min(Math.max(ev.clientX, 200), 480);
+      setWidth(newWidth);
+    };
+    const onMouseUp = () => {
+      dragging.current = false;
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  }, []);
 
   const strippedContent = useMemo(() => {
     const map = new Map<string, string>();
@@ -50,7 +69,10 @@ export function Sidebar({
   });
 
   return (
-    <aside className="flex h-screen w-64 shrink-0 flex-col border-r bg-muted/30">
+    <aside
+      className="relative flex h-screen shrink-0 flex-col border-r bg-muted/30"
+      style={{ width }}
+    >
       <div className="border-b p-4">
         <Link
           href="/"
@@ -104,6 +126,12 @@ export function Sidebar({
           })}
         </nav>
       </ScrollArea>
+
+      {/* Resize handle */}
+      <div
+        onMouseDown={onMouseDown}
+        className="absolute right-0 top-0 z-10 h-full w-1 cursor-col-resize hover:bg-primary/20 active:bg-primary/30"
+      />
     </aside>
   );
 }

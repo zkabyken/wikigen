@@ -1,14 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { Sidebar } from "@/components/wiki/sidebar";
 import { WikiContent } from "@/components/wiki/wiki-content";
 import { TableOfContents } from "@/components/wiki/table-of-contents";
 import { WikiLoadingSkeleton } from "@/components/wiki/loading-skeleton";
 import { ThinkingIndicator } from "@/components/wiki/thinking-indicator";
+import { ChatPanel } from "@/components/wiki/chat-panel";
 import { useWiki } from "@/hooks/use-wiki";
+import { useChat } from "@/hooks/use-chat";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Sparkles } from "lucide-react";
 
 export default function WikiPage() {
   const params = useParams<{ owner: string; repo: string }>();
@@ -22,6 +26,59 @@ export default function WikiPage() {
     useWiki(owner, repo);
 
   const readyIds = useMemo(() => new Set(pages.keys()), [pages]);
+
+  // Build wiki context for Q&A from all pages
+  const wikiContext = useMemo(() => {
+    return Array.from(pages.values())
+      .map((p) => {
+        // Convert HTML to clean readable text
+        const text = p.content
+          // Preserve code blocks: <pre><code>...</code></pre> → fenced blocks
+          .replace(
+            /<pre[^>]*><code[^>]*(?:class="[^"]*language-(\w+)"[^>]*)?>([\s\S]*?)<\/code><\/pre>/gi,
+            (_, lang, code) => `\n\`\`\`${lang || ""}\n${code}\n\`\`\`\n`
+          )
+          // Headings
+          .replace(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi, "\n### $1\n")
+          // List items
+          .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, "- $1\n")
+          // Paragraphs and divs → newlines
+          .replace(/<\/(p|div|ul|ol|blockquote|section)>/gi, "\n")
+          // Line breaks
+          .replace(/<br\s*\/?>/gi, "\n")
+          // Inline code
+          .replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, "`$1`")
+          // Bold
+          .replace(/<(strong|b)[^>]*>([\s\S]*?)<\/\1>/gi, "**$2**")
+          // Italic
+          .replace(/<(em|i)[^>]*>([\s\S]*?)<\/\1>/gi, "*$2*")
+          // Links
+          .replace(/<a[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, "[$2]($1)")
+          // Strip remaining tags
+          .replace(/<[^>]*>/g, "")
+          // Decode HTML entities
+          .replace(/&amp;/g, "&")
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/&nbsp;/g, " ")
+          // Collapse excessive blank lines
+          .replace(/\n{3,}/g, "\n\n")
+          .trim();
+
+        return `## ${p.name}\n${p.description}\n\n${text}`;
+      })
+      .join("\n\n---\n\n");
+  }, [pages]);
+
+  const [chatOpen, setChatOpen] = useState(false);
+  const {
+    messages,
+    isLoading: chatLoading,
+    sendMessage,
+    clearMessages,
+  } = useChat(wikiContext);
 
   // Initial loading — no analysis yet
   if (!repoName && !error) {
@@ -69,10 +126,24 @@ export default function WikiPage() {
         readyIds={readyIds}
         activeId={activeId ?? undefined}
       />
-      <main className="flex-1 overflow-y-auto p-10 pb-[50vh]">
+      <main className="relative flex-1 overflow-y-auto p-10 pb-[50vh]">
+        {/* Sticky top bar with status and Ask AI button */}
         {status && !isDone && (
           <div className="mb-6">
             <ThinkingIndicator message={status} />
+          </div>
+        )}
+        {isDone && (
+          <div className="sticky top-4 z-10 mb-6 flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setChatOpen((o) => !o)}
+              className="gap-2"
+            >
+              <Sparkles className="size-3.5" />
+              Ask AI
+            </Button>
           </div>
         )}
 
@@ -98,6 +169,16 @@ export default function WikiPage() {
           )}
         </div>
       </main>
+
+      {/* Q&A Chat Panel */}
+      <ChatPanel
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+        messages={messages}
+        isLoading={chatLoading}
+        onSendMessage={sendMessage}
+        onClear={clearMessages}
+      />
     </>
   );
 }

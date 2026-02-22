@@ -1,7 +1,14 @@
 import { NextRequest } from "next/server";
-import { GenerateWikiRequestSchema } from "@/lib/schemas";
+import { GenerateWikiRequestSchema, QARequestSchema } from "@/lib/schemas";
 import { generateWikiStream } from "@/lib/agents/orchestrator";
-import type { StreamEvent } from "@/types";
+import { answerQuestion } from "@/lib/agents/qa-agent";
+import type { StreamEvent, QAStreamEvent } from "@/types";
+
+const SSE_HEADERS = {
+  "Content-Type": "text/event-stream",
+  "Cache-Control": "no-cache",
+  Connection: "keep-alive",
+};
 
 export async function POST(request: NextRequest) {
   let body: unknown;
@@ -13,6 +20,16 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  const flow = (body as { flow?: string })?.flow;
+
+  if (flow === "qa") {
+    return handleQA(body);
+  }
+
+  return handleGenerate(body);
+}
+
+function handleGenerate(body: unknown) {
   const parsed = GenerateWikiRequestSchema.safeParse(body);
   if (!parsed.success) {
     return new Response(JSON.stringify({ error: "Invalid request" }), {
@@ -48,11 +65,39 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
+  return new Response(stream, { headers: SSE_HEADERS });
+}
+
+function handleQA(body: unknown) {
+  const parsed = QARequestSchema.safeParse(body);
+  if (!parsed.success) {
+    return new Response(JSON.stringify({ error: "Invalid request" }), {
+      status: 400,
+    });
+  }
+
+  const { question, wikiContext, history } = parsed.data;
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      const encoder = new TextEncoder();
+
+      function emit(event: QAStreamEvent) {
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify(event)}\n\n`)
+        );
+      }
+
+      try {
+        await answerQuestion(question, wikiContext, history, emit);
+      } catch (error) {
+        console.error("QA failed:", error);
+        emit({ type: "error", message: "Failed to answer question." });
+      } finally {
+        controller.close();
+      }
     },
   });
+
+  return new Response(stream, { headers: SSE_HEADERS });
 }

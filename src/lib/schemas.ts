@@ -46,8 +46,22 @@ export const SubsystemPageSchema = z.object({
 
 export type SubsystemPage = z.infer<typeof SubsystemPageSchema>;
 
-// API request
+// API request — wiki generation
 export const GenerateWikiRequestSchema = z.object({
   owner: z.string().min(1),
   repo: z.string().min(1),
+});
+
+// API request — Q&A chat
+export const QARequestSchema = z.object({
+  question: z.string().min(1),
+  wikiContext: z.string().min(1),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(["user", "assistant"]),
+        content: z.string(),
+      })
+    )
+    .default([]),
 });
