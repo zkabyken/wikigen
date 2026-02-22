@@ -6,9 +6,9 @@ One-click wiki generator for public GitHub repos. Paste a repo URL, get structur
 
 ## How it works
 
-1. **Analyze** — Fetches the repo tree + key files, then uses GPT to identify user-facing subsystems (features, not technical layers).
-2. **Generate** — Builds a wiki page per subsystem in parallel. Each page includes entry points, inline citations linking to specific files/lines, and code snippets.
-3. **Stream** — Pages arrive over SSE as they finish, so you can start reading before generation is done.
+1. **Analyze**: Fetches the repo tree + key files, then uses GPT to identify user-facing subsystems.
+2. **Generate**: Builds a wiki page per subsystem in parallel. Each page includes entry points, inline citations linking to specific files/lines, and code snippets.
+3. **Stream**: Pages arrive over SSE as they finish, so you can start reading before generation is done.
 
 There's also a Q&A chat that lets you ask questions about the generated wiki.
 
